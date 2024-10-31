@@ -40,9 +40,6 @@
             groupBox3 = new GroupBox();
             btnXoa = new Button();
             btnThem = new Button();
-            Column1 = new DataGridViewTextBoxColumn();
-            Column2 = new DataGridViewTextBoxColumn();
-            Column3 = new DataGridViewTextBoxColumn();
             groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewSanPham).BeginInit();
             groupBox2.SuspendLayout();
@@ -132,7 +129,6 @@
             // dataGridViewGioHang
             // 
             dataGridViewGioHang.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewGioHang.Columns.AddRange(new DataGridViewColumn[] { Column1, Column2, Column3 });
             dataGridViewGioHang.Location = new Point(6, 26);
             dataGridViewGioHang.Name = "dataGridViewGioHang";
             dataGridViewGioHang.RowHeadersWidth = 51;
@@ -171,27 +167,6 @@
             btnThem.UseVisualStyleBackColor = true;
             btnThem.Click += btnThem_Click;
             // 
-            // Column1
-            // 
-            Column1.HeaderText = "TenSanPham";
-            Column1.MinimumWidth = 6;
-            Column1.Name = "Column1";
-            Column1.Width = 125;
-            // 
-            // Column2
-            // 
-            Column2.HeaderText = "SoLuong";
-            Column2.MinimumWidth = 6;
-            Column2.Name = "Column2";
-            Column2.Width = 125;
-            // 
-            // Column3
-            // 
-            Column3.HeaderText = "Gia";
-            Column3.MinimumWidth = 6;
-            Column3.Name = "Column3";
-            Column3.Width = 125;
-            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -226,8 +201,5 @@
         private TextBox tbTongGia;
         private Label label2;
         private Button btnThanhToan;
-        private DataGridViewTextBoxColumn Column1;
-        private DataGridViewTextBoxColumn Column2;
-        private DataGridViewTextBoxColumn Column3;
     }
 }

@@ -9,17 +9,32 @@ namespace kt2
         {
             InitializeComponent();
             LoadSanPham();
+            InitializeGioHang();
+        }
+
+        private void InitializeGioHang()
+        {
+            if (dataGridViewGioHang.Columns.Count == 0) 
+            {
+                dataGridViewGioHang.Columns.Add("TenSanPham", "Tên Sản Phẩm");
+                dataGridViewGioHang.Columns.Add("Gia", "Giá");
+                dataGridViewGioHang.Columns.Add("SoLuong", "Số Lượng");
+            }
         }
         private void LoadSanPham()
         {
             using (SqlConnection conn = new SqlConnection(KetNoi.chuoiKN))
             {
                 conn.Open();
-                SqlCommand cmd = new SqlCommand("SELECT * FROM DanhSachSanPham", conn);
-                SqlDataAdapter adapter = new SqlDataAdapter(cmd);
+                SqlCommand cmd = new SqlCommand("SELECT TenSanPham, AnhSanPham, Gia, SoLuong FROM DanhSachSanPham", conn);
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
                 DataTable dt = new DataTable();
-                adapter.Fill(dt);
+                da.Fill(dt);
                 dataGridViewSanPham.DataSource = dt;
+
+                dataGridViewSanPham.Columns["TenSanPham"].HeaderText = "Tên Sản Phẩm";
+                dataGridViewSanPham.Columns["Gia"].HeaderText = "Giá";
+                dataGridViewSanPham.Columns["SoLuong"].HeaderText = "Số Lượng";
             }
         }
 
@@ -39,61 +54,53 @@ namespace kt2
         }
         private void btnThem_Click(object sender, EventArgs e)
         {
-            if (dataGridViewSanPham.SelectedRows.Count > 0 && !string.IsNullOrEmpty(tbSoLuong.Text))
+            if (dataGridViewSanPham.CurrentRow != null)
             {
-                // Lấy thông tin sản phẩm từ DataGridView
-                string tenSanPham = dataGridViewSanPham.SelectedRows[0].Cells["TenSanPham"].Value.ToString();
-                float gia = float.Parse(dataGridViewSanPham.SelectedRows[0].Cells["Gia"].Value.ToString());
-                float soLuong = float.Parse(tbSoLuong.Text);
+                string tenSanPham = dataGridViewSanPham.CurrentRow.Cells["TenSanPham"].Value.ToString();
+                float gia = float.Parse(dataGridViewSanPham.CurrentRow.Cells["Gia"].Value.ToString());
+                float soLuongSP = float.Parse(dataGridViewSanPham.CurrentRow.Cells["SoLuong"].Value.ToString());
+                float soLuongThem;
 
-                // Tính tổng giá
-                float tongGia = gia * soLuong;
-
-                // Thêm vào DataGridView GioHang
-                dataGridViewGioHang.Rows.Add(tenSanPham, gia, soLuong, tongGia);
-
-                // Cập nhật vào cơ sở dữ liệu
-                using (SqlConnection conn = new SqlConnection(KetNoi.chuoiKN))
+                if (float.TryParse(tbSoLuong.Text, out soLuongThem) && soLuongThem > 0 && soLuongThem <= soLuongSP)
                 {
-                    conn.Open();
-                    SqlCommand cmd = new SqlCommand("INSERT INTO GioHang (TenSanPham, Gia, SoLuong) VALUES (@tenSanPham, @gia, @soLuong)", conn);
-                    cmd.Parameters.AddWithValue("@tenSanPham", tenSanPham);
-                    cmd.Parameters.AddWithValue("@gia", gia);
-                    cmd.Parameters.AddWithValue("@soLuong", soLuong);
-                    cmd.ExecuteNonQuery();
-                }
+                    dataGridViewGioHang.Rows.Add(tenSanPham, gia, soLuongThem);
+                  
+                    soLuongSP -= soLuongThem; 
+                    dataGridViewSanPham.CurrentRow.Cells["SoLuong"].Value = soLuongSP; 
 
-                // Làm mới trường nhập số lượng
-                tbSoLuong.Clear();
+                    UpdateTongGia();
+                }
+                else
+                {
+                    MessageBox.Show("Số lượng không hợp lệ hoặc vượt quá số lượng có sẵn!");
+                }
             }
             else
             {
-                MessageBox.Show("Vui lòng chọn sản phẩm và nhập số lượng.");
+                MessageBox.Show("Vui lòng chọn sản phẩm từ danh sách!");
             }
+        }
+
+
+        private void UpdateTongGia()
+        {
+            float tongGia = 0;
+            foreach (DataGridViewRow row in dataGridViewGioHang.Rows)
+            {
+                if (row.Cells["Gia"].Value != null && row.Cells["SoLuong"].Value != null)
+                {
+                    tongGia += float.Parse(row.Cells["Gia"].Value.ToString()) * float.Parse(row.Cells["SoLuong"].Value.ToString());
+                }
+            }
+            tbTongGia.Text = tongGia.ToString();
         }
 
         private void btnXoa_Click(object sender, EventArgs e)
         {
-            if (dataGridViewGioHang.SelectedRows.Count > 0)
+            if (dataGridViewGioHang.CurrentRow != null)
             {
-                // Lấy tên sản phẩm từ hàng được chọn
-                string tenSanPham = dataGridViewGioHang.SelectedRows[0].Cells["TenSanPham"].Value.ToString();
-
-                // Xóa hàng khỏi DataGridView
-                dataGridViewGioHang.Rows.RemoveAt(dataGridViewGioHang.SelectedRows[0].Index);
-
-                // Xóa sản phẩm khỏi cơ sở dữ liệu
-                using (SqlConnection conn = new SqlConnection(KetNoi.chuoiKN))
-                {
-                    conn.Open();
-                    SqlCommand cmd = new SqlCommand("DELETE FROM GioHang WHERE TenSanPham = @tenSanPham", conn);
-                    cmd.Parameters.AddWithValue("@tenSanPham", tenSanPham);
-                    cmd.ExecuteNonQuery();
-                }
-            }
-            else
-            {
-                MessageBox.Show("Vui lòng chọn sản phẩm để xóa.");
+                dataGridViewGioHang.Rows.Remove(dataGridViewGioHang.CurrentRow);
+                UpdateTongGia();
             }
         }
 
@@ -105,32 +112,9 @@ namespace kt2
 
         private void btnThanhToan_Click(object sender, EventArgs e)
         {
-                // Lặp qua từng hàng trong dataGridViewGioHang
-                foreach (DataGridViewRow row in dataGridViewGioHang.Rows)
-                {
-                    // Lấy thông tin từ hàng
-                    string tenSanPham = row.Cells["TenSanPham"].Value.ToString();
-                    float soLuong = float.Parse(row.Cells["SoLuong"].Value.ToString());
-
-                    // Cập nhật số lượng trong bảng DanhSachSanPham
-                    using (SqlConnection conn = new SqlConnection(KetNoi.chuoiKN))
-                    {
-                        conn.Open();
-                        SqlCommand cmd = new SqlCommand("UPDATE DanhSachSanPham SET SoLuong = SoLuong - @soLuong WHERE TenSanPham = @tenSanPham", conn);
-                        cmd.Parameters.AddWithValue("@soLuong", soLuong);
-                        cmd.Parameters.AddWithValue("@tenSanPham", tenSanPham);
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-
-                // Xóa tất cả sản phẩm trong giỏ hàng sau khi thanh toán
-                dataGridViewGioHang.Rows.Clear();
-
-                // Ẩn dataGridViewGioHang
-                dataGridViewGioHang.Visible = false;
-
-                // Hiển thị thông báo thanh toán thành công
-                MessageBox.Show("Thanh toán thành công!");
+            MessageBox.Show("Thanh toán thành công!");
+            dataGridViewGioHang.Rows.Clear();
+            tbTongGia.Text = "0";
         }
     }
 }
