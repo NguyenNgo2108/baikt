@@ -99,8 +99,27 @@ namespace kt2
         {
             if (dataGridViewGioHang.CurrentRow != null)
             {
-                dataGridViewGioHang.Rows.Remove(dataGridViewGioHang.CurrentRow);
-                UpdateTongGia();
+                string tenSanPham = dataGridViewGioHang.CurrentRow.Cells["TenSanPham"].Value.ToString();
+                float soLuongXoa = float.Parse(dataGridViewGioHang.CurrentRow.Cells["SoLuong"].Value.ToString());
+
+                dataGridViewGioHang.Rows.RemoveAt(dataGridViewGioHang.CurrentRow.Index);
+
+                foreach (DataGridViewRow row in dataGridViewSanPham.Rows)
+                {
+                    if (row.Cells["TenSanPham"].Value.ToString() == tenSanPham)
+                    {
+                        float soLuongSP = float.Parse(row.Cells["SoLuong"].Value.ToString());
+                        soLuongSP += soLuongXoa; 
+                        row.Cells["SoLuong"].Value = soLuongSP;
+
+                        UpdateTongGia(); 
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Vui lòng chọn sản phẩm trong giỏ hàng để xóa!");
             }
         }
 
